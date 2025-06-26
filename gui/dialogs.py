@@ -41,7 +41,7 @@ class GenerateKeyDialog(tk.Toplevel):
         # тип ключа (с выпадающим списком ed25519/rsa)
         tk.Label(self, text="Тип ключа:").pack(anchor="w", padx=padx, pady=(pady, 0))
         self.key_type_var = tk.StringVar(value="ed25519")
-        self.type_combo = ttk.Combobox(self, textvariable=self.key_type_var, values=["ed25519", "rsa"])
+        self.type_combo = ttk.Combobox(self, textvariable=self.key_type_var, values=["ed25519", "rsa", "ECDSA"])
         self.type_combo.state(["readonly"]) # только выбор
         self.type_combo.pack(fill="x", padx=padx)
 
