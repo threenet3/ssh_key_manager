@@ -1,7 +1,6 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
 *.log
 
 build/
@@ -18,6 +17,5 @@ dist/
 
 .DS_Store
 Thumbs.db
-
 .env
 .venv
