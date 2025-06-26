@@ -29,7 +29,12 @@ def is_valid_key_name(name: str) -> bool:
 чтобы были латинские буквы, цифры, точки, дефисы, подчеркивание
 """
 def is_valid_host_alias(alias: str) -> bool:
-    return bool(HOST_ALIAS_REGEX.fullmatch(alias))
+    if not HOST_ALIAS_REGEX.fullmatch(alias):
+        return False
+
+    # конфликты localhost, all, wildcard
+    forbidden_hosts = {"*", "localhost", "default"}
+    return alias.lower() not in forbidden_hosts
 
 
 """
