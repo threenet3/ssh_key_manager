@@ -20,7 +20,7 @@ dist/
 .DS_Store
 Thumbs.db
 
-*.spec
+# *.spec
 
 .env
 .venv

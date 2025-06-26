@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ssh-key-manager"
+version = "1.0.0"
+description = "Графическая утилита для управления SSH ключами"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+    { name = "Vsevolod", email = "v.mikh3@gmail.com" }
+]
+keywords = ["ssh", "key manager", "tkinter", "gui"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Security :: Cryptography",
+    "Environment :: X11 Applications :: GTK",
+    "Intended Audience :: End Users/Desktop"
+]
+
+[project.scripts]
+ssh-key-manager = "ssh_key_manager.main:main"
+
+# Зависимости, устанавливаемые с проектом
+dependencies = [
+    "pyperclip>=1.8.0",
+    "Pillow>=9.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "flake8",
+    "pytest"
+]
+
+[project.urls]
+Repository = "https://github.com/threenet3/ssh_key_manager"
