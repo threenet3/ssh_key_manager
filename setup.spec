@@ -16,6 +16,7 @@ BuildRequires:  pyproject-rpm-macros
 Requires:       python3 >= 3.8
 Requires:       python3-tkinter
 Requires:       python3-pyperclip
+Requires:       python3-pillow
 Requires:       openssh-clients
 
 %global _description %{expand:
