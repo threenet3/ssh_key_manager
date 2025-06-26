@@ -20,7 +20,5 @@ dist/
 .DS_Store
 Thumbs.db
 
-# *.spec
-
 .env
 .venv
