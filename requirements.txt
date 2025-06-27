@@ -1,3 +1,10 @@
-tk
-pyperclip
-Pillow
+python3-pillow-tk
+python3-pillow
+python3-tkinter
+python3-pyperclip
+rpmdevtools
+redhat-rpm-config
+python3-devel
+python3-pip
+python3-wheel
+pyproject-rpm-macros
