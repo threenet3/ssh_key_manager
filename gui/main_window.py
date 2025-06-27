@@ -130,7 +130,7 @@ class MainWindow(tk.Tk):
         dialog.transient(self)
         dialog.grab_set()
 
-        fields = ["HostName", "User", "Port", "IdentityFile"]
+        fields = ["Имя хоста", "Пользователь", "Порт", "Идентификационный файл"]
         entries = {}
 
         # поле Host (редактируемое только при добавлении)
