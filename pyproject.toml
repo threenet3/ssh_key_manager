@@ -4,39 +4,40 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ssh-key-manager"
-version = "1.0"
-description = "Графическая утилита для управления SSH ключами"
+version = "1.0.0"
+description = "Графическая утилита для управления SSH-ключами на Python (tkinter) для Linux (RPM)"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
 authors = [
-    { name = "Vsevolod", email = "v.mikh3@gmail.com" }
+  { name = "Vsevolod", email = "v.mikh3@gmail.com" }
 ]
-keywords = ["ssh", "key manager", "tkinter", "gui"]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "Operating System :: POSIX :: Linux",
-    "License :: OSI Approved :: MIT License",
-    "Topic :: Security :: Cryptography",
-    "Environment :: X11 Applications :: GTK",
-    "Intended Audience :: End Users/Desktop"
+  "Development Status :: 4 - Beta",
+  "Environment :: X11 Applications :: GTK",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Topic :: Security :: Cryptography",
+  "Topic :: System :: Systems Administration",
+  "Topic :: Utilities"
 ]
-
-[project.scripts]
-ssh-key-manager = "ssh_key_manager.main:main"
-
-# Зависимости, устанавливаемые с проектом
+keywords = ["ssh", "key manager", "GUI", "tkinter", "Fedora", "RPM"]
 dependencies = [
-    "pyperclip>=1.8.0",
-    "Pillow>=9.0.0"
+  "pyperclip >=1.8",
+  "Pillow >=10.0"
 ]
 
 [project.optional-dependencies]
-dev = [
-    "black",
-    "flake8",
-    "pytest"
-]
+dev = ["pytest", "flake8", "mypy"]
+
+[project.gui-scripts]
+ssh-key-manager = "main:main"
 
 [project.urls]
-Repository = "https://github.com/threenet3/ssh_key_manager"
+repository = "https://github.com/threenet3/ssh_key_manager"
+documentation = "https://github.com/threenet3/ssh_key_manager#readme"
+changelog = "https://github.com/threenet3/ssh_key_manager/releases"
+

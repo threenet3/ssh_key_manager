@@ -1,36 +1,33 @@
 Name:           python-ssh-key-manager
-Version:        1.0
+Version:        1.0.0
 Release:        1%{?dist}
-Summary:        Графическая утилита для управления SSH ключами
+Summary:        GUI-утилита для управления SSH ключами на Python (tkinter)
 
 License:        MIT
-URL:            https://github.com/threenet3/ssh_key_manager
-Source0:        %{name}-%{version}.tar.gz
+URL:            https://github.com/yourname/ssh-key-manager
+Source:         %{url}/archive/refs/tags/v%{version}/ssh-key-manager-%{version}.tar.gz
 
 BuildArch:      noarch
-
 BuildRequires:  python3-devel
 BuildRequires:  pyproject-rpm-macros
-
-# Прямые зависимости
-Requires:       python3 >= 3.8
-Requires:       python3-tkinter
-Requires:       python3-pyperclip
-Requires:       python3-pillow
-Requires:       openssh-clients
+BuildRequires:  pillow
+BuildRequires:  pyperclip
 
 %global _description %{expand:
-Графическое приложение на Python с интерфейсом Tkinter для создания, удаления и управления SSH-ключами,
-а также редактирования ~/.ssh/config.}
+SSH Key Manager — это графическая утилита для генерации, удаления и управления SSH-ключами 
+и конфигурацией ~/.ssh/config с помощью Tkinter. Предназначена для настольных пользователей Fedora/Linux.}
 
 %description %_description
 
 %package -n python3-ssh-key-manager
 Summary:        %{summary}
+Recommends:     python3-pyperclip
+Recommends:     python3-pillow
+
 %description -n python3-ssh-key-manager %_description
 
 %prep
-%autosetup -n %{name}-%{version}
+%autosetup -n ssh-key-manager-%{version}
 
 %generate_buildrequires
 %pyproject_buildrequires
@@ -41,25 +38,18 @@ Summary:        %{summary}
 %install
 %pyproject_install
 
-# Установка иконки и скрипта запуска вручную
-mkdir -p %{buildroot}/usr/share/%{name}/assets
-cp assets/ssh.png %{buildroot}/usr/share/%{name}/assets/
-
-mkdir -p %{buildroot}/usr/bin
-cat > %{buildroot}/usr/bin/ssh-key-manager <<EOF
-#!/bin/bash
-exec python3 -m ssh_key_manager "\$@"
-EOF
-chmod +x %{buildroot}/usr/bin/ssh-key-manager
-
+# Название модуля
 %pyproject_save_files ssh_key_manager
 
+%check
+# можно добавить автотесты
+# %pytest
+
 %files -n python3-ssh-key-manager -f %{pyproject_files}
-/usr/bin/ssh-key-manager
-/usr/share/%{name}/assets/ssh.png
 %doc README.md
 %license LICENSE
+%{_bindir}/ssh-key-manager
 
 %changelog
-* Wed Jun 25 2025 Vsevolod <v.mikh3@gmail.com> - 1.0-1
-- Initial RPM build using pyproject macros
+* Thu Jun 27 2025 Vsevolod <v.mikh3@gmail.com> - 1.0.0-1
+- Initial RPM release for Fedora
