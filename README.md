@@ -2,11 +2,11 @@
 
 **Графическая утилита для управления SSH-ключами** на Python с использованием Tkinter. Позволяет создавать, удалять, просматривать и назначать SSH-ключи, а также удобно редактировать файл `~/.ssh/config`.
 
-- [Изображение №1](<img alt="Screenshot" height="400" src="screenshots/1.png" width="400"/>)
-- [Изображение №2](<img alt="Screenshot" height="400" src="screenshots/2.png" width="400"/>)
-- [Изображение №3](<img alt="Screenshot" height="400" src="screenshots/3.png" width="400"/>)
-- [Изображение №4](<img alt="Screenshot" height="400" src="screenshots/4.png" width="400"/>)
-- [Изображение №5](<img alt="Screenshot" height="400" src="screenshots/5.png" width="400"/>)
+- [Изображение №1]("screenshots/1.png")
+- [Изображение №2]("screenshots/2.png")
+- [Изображение №3]("screenshots/3.png")
+- [Изображение №4]("screenshots/4.png")
+- [Изображение №5]("screenshots/5.png")
 
 ---
 
