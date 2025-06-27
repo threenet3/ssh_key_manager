@@ -28,6 +28,10 @@ dependencies = [
   "pillow"
 ]
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["ssh_key_manager"]
+
 [project.optional-dependencies]
 dev = ["pytest", "flake8", "mypy"]
 
