@@ -11,7 +11,6 @@ BuildArch:      noarch
 BuildRequires:  python3-devel
 BuildRequires:  pyproject-rpm-macros
 BuildRequires:  python3dist(pillow)
-BuildRequires:  python3dist(pillow-tk)
 BuildRequires:  python3dist(pyperclip)
 
 %global _description %{expand:
@@ -24,7 +23,6 @@ SSH Key Manager — это графическая утилита для гене
 Summary:        %{summary}
 Recommends:     python3dist(pyperclip)
 Recommends:     python3dist(pillow)
-Recommends:     python3dist(pillow-tk)
 
 %description -n python3-ssh-key-manager %_description
 
