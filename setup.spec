@@ -5,7 +5,7 @@ Summary:        Графическая утилита для управлени�
 
 License:        MIT
 URL:            https://github.com/threenet3/ssh_key_manager
-Source:         ssh-key-manager-%{version}.tar.gz
+Source:         ssh_key_manager-%{version}.tar.gz
 
 BuildArch:      noarch
 BuildRequires:  python3-devel
@@ -27,7 +27,7 @@ Recommends:     python3dist(pillow)
 %description -n python3-ssh-key-manager %_description
 
 %prep
-%autosetup -n ssh-key-manager-%{version}
+%autosetup -n ssh_key_manager-%{version}
 
 %generate_buildrequires
 %pyproject_buildrequires

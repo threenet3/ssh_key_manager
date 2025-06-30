@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from core import key_manager
-from utils import validators
+from src.ssh_key_manager.core import key_manager
+from src.ssh_key_manager.utils import validators
 
 
 class GenerateKeyDialog(tk.Toplevel):
