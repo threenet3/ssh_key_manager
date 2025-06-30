@@ -1,6 +1,6 @@
 import sys
 import tkinter as tk
-from src.ssh_key_manager.gui.main_window import MainWindow
+from ssh_key_manager.gui.main_window import MainWindow
 
 def main():
     try:

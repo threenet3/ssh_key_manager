@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
-from src.ssh_key_manager.core import key_manager, ssh_config
-from src.ssh_key_manager.utils import validators
-from src.ssh_key_manager.gui.dialogs import GenerateKeyDialog
+from ssh_key_manager.core import key_manager, ssh_config
+from ssh_key_manager.utils import validators
+from ssh_key_manager.gui.dialogs import GenerateKeyDialog
 from pathlib import Path
 from PIL import Image, ImageTk
 

@@ -16,7 +16,11 @@
 
 ## 🧱 Установка
 
-**RPM**
+**RPM сборка**
+
+```bash
+rpmbuild -ba setup.spec
+```
 
 ```bash
 sudo dnf install ./ssh-key-manager-1.0-*.noarch.rpm
