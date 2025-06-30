@@ -1,4 +1,5 @@
 import tkinter as tk
+import re
 from tkinter import ttk, messagebox, simpledialog
 from ssh_key_manager.core import key_manager, ssh_config
 from ssh_key_manager.utils import validators
@@ -129,25 +130,8 @@ class MainWindow(tk.Tk):
 
     # открытие диалога добавления хоста
     def add_host_dialog(self):
-        # Окно выбора типа
-        dialog = tk.Toplevel(self)
-        dialog.title("Добавить запись")
-        dialog.geometry("300x150")
-        dialog.transient(self)
-        dialog.grab_set()
+        self._host_editor_dialog()
 
-        ttk.Label(dialog, text="Что вы хотите добавить?").pack(pady=10)
-
-        def add_host():
-            dialog.destroy()
-            self._host_editor_dialog()
-
-        def add_global():
-            dialog.destroy()
-            self._global_editor_dialog(existing={"type": "global", "lines": [], "params": {}})
-
-        ttk.Button(dialog, text="Host", command=add_host).pack(pady=5)
-        ttk.Button(dialog, text="Глобальный блок", command=add_global).pack(pady=5)
 
     def edit_selected_host(self):
         entry = self.get_selected_host_entry()
@@ -217,38 +201,72 @@ class MainWindow(tk.Tk):
     def _global_editor_dialog(self, existing):
         dialog = tk.Toplevel(self)
         dialog.title("Глобальные настройки")
-        dialog.geometry("400x300")
+        dialog.geometry("600x400")
         dialog.transient(self)
         dialog.grab_set()
 
-        fields = list(existing.get("params", {}).keys()) or ["ServerAliveInterval", "ControlMaster", "ControlPersist"]
-        entries = {}
+        text = tk.Text(dialog, wrap="none", font=("Courier", 10))
+        text.pack(expand=True, fill="both", padx=10, pady=10)
 
-        for field in fields:
-            tk.Label(dialog, text=field + ":").pack()
-            e = ttk.Entry(dialog)
-            e.pack(fill="x", padx=10)
-            e.insert(0, existing["params"].get(field, ""))
-            entries[field] = e
+        scrollbar = ttk.Scrollbar(dialog, orient="vertical", command=text.yview)
+        scrollbar.pack(side="right", fill="y")
+        text.configure(yscrollcommand=scrollbar.set)
+
+        # вставка начального содержимого
+        original_lines = existing.get("lines", [])
+        text.insert("1.0", "".join(original_lines))
+
+        # подсветка
+        def highlight():
+            text.tag_remove("keyword", "1.0", "end")
+            text.tag_remove("comment", "1.0", "end")
+            text.tag_remove("number", "1.0", "end")
+            text.tag_remove("path", "1.0", "end")
+
+            keywords = r"\b(ServerAliveInterval|ControlMaster|ControlPersist|User|Port|HostName|IdentityFile|ForwardAgent|ProxyJump)\b"
+            for match in re.finditer(keywords, text.get("1.0", "end"), flags=re.IGNORECASE):
+                start = f"1.0 + {match.start()} chars"
+                end = f"1.0 + {match.end()} chars"
+                text.tag_add("keyword", start, end)
+
+            for match in re.finditer(r"#.*", text.get("1.0", "end")):
+                start = f"1.0 + {match.start()} chars"
+                end = f"1.0 + {match.end()} chars"
+                text.tag_add("comment", start, end)
+
+            for match in re.finditer(r"\b\d+\b", text.get("1.0", "end")):
+                start = f"1.0 + {match.start()} chars"
+                end = f"1.0 + {match.end()} chars"
+                text.tag_add("number", start, end)
+
+            for match in re.finditer(r"(~|/)[\w/\.-]+", text.get("1.0", "end")):
+                start = f"1.0 + {match.start()} chars"
+                end = f"1.0 + {match.end()} chars"
+                text.tag_add("path", start, end)
+
+        # конфигурация цветов
+        text.tag_config("keyword", foreground="blue")
+        text.tag_config("comment", foreground="gray")
+        text.tag_config("number", foreground="darkgreen")
+        text.tag_config("path", foreground="purple")
+
+        # запуск подсветки при изменении текста
+        def on_key_release(event):
+            highlight()
+
+        text.bind("<KeyRelease>", on_key_release)
+
+        highlight()  # подсветить сразу
 
         def on_save():
-            new_lines = []
-            new_params = {}
-
-            for field, entry in entries.items():
-                val = entry.get().strip()
-                if val:
-                    new_lines.append(f"{field} {val}\n")
-                    new_params[field] = val
-
-            existing["lines"] = new_lines
-            existing["params"] = new_params
-
+            new_lines = text.get("1.0", "end").strip().splitlines(keepends=True)
+            existing["lines"] = [line if line.endswith("\n") else line + "\n" for line in new_lines]
             ssh_config.write_config(self._config_entries)
             self.refresh_config_list()
             dialog.destroy()
 
         ttk.Button(dialog, text="Сохранить", command=on_save).pack(pady=10)
+
 
 
     """
