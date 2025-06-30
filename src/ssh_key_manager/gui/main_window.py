@@ -201,7 +201,7 @@ class MainWindow(tk.Tk):
     def _global_editor_dialog(self, existing):
         dialog = tk.Toplevel(self)
         dialog.title("Глобальные настройки")
-        dialog.geometry("600x400")
+        dialog.geometry("600x330")
         dialog.transient(self)
         dialog.grab_set()
 
