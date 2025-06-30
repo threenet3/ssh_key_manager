@@ -31,7 +31,7 @@ class MainWindow(tk.Tk):
         self.config_frame = ttk.Frame(self.notebook)
         self.settings_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.keys_frame, text="Ключи")
-        self.notebook.add(self.config_frame, text="Конфигурация")
+        self.notebook.add(self.config_frame, text="Удаленные подключения")
         self.notebook.add(self.settings_frame, text="Настройки")
         # инициализация UI во вкладках
         self.init_keys_tab()
@@ -54,13 +54,13 @@ class MainWindow(tk.Tk):
         button_frame = tk.Frame(self.keys_frame)
         button_frame.pack(side="left", fill="both", expand=True, padx=10)
 
-        self.refresh_keys_btn = ttk.Button(button_frame, text="Обновить список", command=self.refresh_keys)
+        self.refresh_keys_btn = ttk.Button(button_frame, text="Обновить", command=self.refresh_keys)
         self.refresh_keys_btn.pack(pady=5)
 
-        self.generate_btn = ttk.Button(button_frame, text="Создать ключ", command=self.generate_key_dialog)
+        self.generate_btn = ttk.Button(button_frame, text="Добавить", command=self.generate_key_dialog)
         self.generate_btn.pack(pady=5)
 
-        self.delete_btn = ttk.Button(button_frame, text="Удалить ключ", command=self.delete_selected_key)
+        self.delete_btn = ttk.Button(button_frame, text="Удалить", command=self.delete_selected_key)
         self.delete_btn.pack(pady=5)
 
         self.view_btn = ttk.Button(button_frame, text="Показать публичный ключ", command=self.show_public_key)
@@ -68,8 +68,10 @@ class MainWindow(tk.Tk):
 
         self.refresh_keys()
 
+
+
     def init_config_tab(self):
-        # Список хостов (конфигурация)
+        # Список хостов
         self.config_listbox = tk.Listbox(self.config_frame, height=20)
         self.config_listbox.pack(side="left", fill="y", padx=10, pady=10)
 
@@ -91,9 +93,16 @@ class MainWindow(tk.Tk):
 
     def refresh_config_list(self):
         self.config_listbox.delete(0, tk.END)
-        self._config_entries = ssh_config.read_config()
-        for entry in self._config_entries:
-            self.config_listbox.insert(tk.END, entry.get("Host", "<без имени>"))
+        all_blocks = ssh_config.read_config()
+        self._config_entries = all_blocks
+
+        for i, entry in enumerate(all_blocks):
+            if entry.get("type") == "host":
+                display = f"Host {entry.get('host', '<без имени>')}"
+            else:
+                display = "[Глобальные настройки]"
+            self.config_listbox.insert(tk.END, display)
+
 
     def get_selected_host_entry(self):
         try:
@@ -108,24 +117,62 @@ class MainWindow(tk.Tk):
             messagebox.showwarning("Выбор хоста", "Выберите запись.")
             return
 
-        confirm = messagebox.askyesno("Удаление", f"Удалить Host '{entry.get('Host')}'?")
+        if entry.get("type") != "host":
+            messagebox.showinfo("Удаление", "Нельзя удалить глобальные настройки.")
+            return
+
+        host_name = entry.get("host")
+        confirm = messagebox.askyesno("Удаление", f"Удалить Host '{host_name}'?")
         if confirm:
-            ssh_config.delete_host(entry.get("Host"))
+            ssh_config.delete_host(host_name)
             self.refresh_config_list()
 
     # открытие диалога добавления хоста
     def add_host_dialog(self):
-        self._host_editor_dialog()
+        # Окно выбора типа
+        dialog = tk.Toplevel(self)
+        dialog.title("Добавить запись")
+        dialog.geometry("300x150")
+        dialog.transient(self)
+        dialog.grab_set()
+
+        ttk.Label(dialog, text="Что вы хотите добавить?").pack(pady=10)
+
+        def add_host():
+            dialog.destroy()
+            self._host_editor_dialog()
+
+        def add_global():
+            dialog.destroy()
+            self._global_editor_dialog(existing={"type": "global", "lines": [], "params": {}})
+
+        ttk.Button(dialog, text="Host", command=add_host).pack(pady=5)
+        ttk.Button(dialog, text="Глобальный блок", command=add_global).pack(pady=5)
 
     def edit_selected_host(self):
         entry = self.get_selected_host_entry()
-        if entry:
-            self._host_editor_dialog(existing=entry)
+        if not entry:
+            return
+
+        if entry.get("type") == "host":
+            self._host_editor_dialog(existing={
+                "Host": entry.get("host", ""),
+                **entry.get("params", {})
+            })
+        elif entry.get("type") == "global":
+            self._global_editor_dialog(existing=entry)
 
     def _host_editor_dialog(self, existing=None):
         # модальное окно редактирования записи
         dialog = tk.Toplevel(self)
-        dialog.title("Хост: " + (existing.get("Host") if existing else "Новый"))
+
+        host_display = "<без имени>"
+        if existing:
+            host_display = existing.get("Host") or existing.get("host") or host_display
+        else:
+            host_display = "Новый"
+
+        dialog.title(f"Хост: {host_display}")
         dialog.geometry("400x300")
         dialog.transient(self)
         dialog.grab_set()
@@ -167,6 +214,41 @@ class MainWindow(tk.Tk):
 
         ttk.Button(dialog, text="Сохранить", command=on_save).pack(pady=10)
 
+    def _global_editor_dialog(self, existing):
+        dialog = tk.Toplevel(self)
+        dialog.title("Глобальные настройки")
+        dialog.geometry("400x300")
+        dialog.transient(self)
+        dialog.grab_set()
+
+        fields = list(existing.get("params", {}).keys()) or ["ServerAliveInterval", "ControlMaster", "ControlPersist"]
+        entries = {}
+
+        for field in fields:
+            tk.Label(dialog, text=field + ":").pack()
+            e = ttk.Entry(dialog)
+            e.pack(fill="x", padx=10)
+            e.insert(0, existing["params"].get(field, ""))
+            entries[field] = e
+
+        def on_save():
+            new_lines = []
+            new_params = {}
+
+            for field, entry in entries.items():
+                val = entry.get().strip()
+                if val:
+                    new_lines.append(f"{field} {val}\n")
+                    new_params[field] = val
+
+            existing["lines"] = new_lines
+            existing["params"] = new_params
+
+            ssh_config.write_config(self._config_entries)
+            self.refresh_config_list()
+            dialog.destroy()
+
+        ttk.Button(dialog, text="Сохранить", command=on_save).pack(pady=10)
 
 
     """
