@@ -15,10 +15,19 @@ SSH_DIR = Path.home() / ".ssh"
 - не имеет расширение файла .pub
 - имеет права доступа (только для владельца)
 """
-def list_keys() -> List[str]:
-    if not SSH_DIR.exists():
-        return []
-    return [f.name for f in SSH_DIR.glob("*") if f.is_file() and is_private_key(f)]
+def is_private_key_file(path: Path) -> bool:
+    try:
+        content = path.read_text(errors='ignore')
+        return "-----BEGIN OPENSSH PRIVATE KEY-----" in content
+    except Exception:
+        return False
+
+def list_keys() -> list[str]:
+    ssh_dir = SSH_DIR
+    return [
+        f.name for f in ssh_dir.iterdir()
+        if f.is_file() and is_private_key_file(f)
+    ]
 
 """
 Проверяет, является ли файл приватным SSH ключом (не .pub и без расширения + права доступа)

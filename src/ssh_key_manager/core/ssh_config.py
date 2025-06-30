@@ -12,32 +12,29 @@ CONFIG_PATH = Path.home() / ".ssh" / "config"
 """
 def read_config() -> List[Dict[str, str]]:
     if not CONFIG_PATH.exists():
-        return [] # если файла нет, то возвращаем пустой список
+        CONFIG_PATH.parent.mkdir(mode=0o700, exist_ok=True)
+        CONFIG_PATH.touch(mode=0o600, exist_ok=True)
+        return []
 
-    config_entries = [] # список всех записей хоста
-    current_entry = {} # временный словарь текующего блока
+    config_entries = []
+    current_entry = {}
 
-    # читаем файл конфига, удаляем пробелы в начале и конце и пропускаем пустые строки
     with CONFIG_PATH.open("r") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
 
-
             if line.lower().startswith("host "):
                 if current_entry:
-                    # сохранение прошлого блока перед началом нового
                     config_entries.append(current_entry)
-                # извлекаем имя хоста и начинается новый блок
                 current_entry = {"Host": line.split(maxsplit=1)[1]}
             else:
                 if current_entry:
-                    parts = line.split(maxsplit=1) # разделение на ключ и значение
+                    parts = line.split(maxsplit=1)
                     if len(parts) == 2:
                         current_entry[parts[0]] = parts[1]
 
-        # добавление крайнего блока, если остался в памяти
         if current_entry:
             config_entries.append(current_entry)
 
