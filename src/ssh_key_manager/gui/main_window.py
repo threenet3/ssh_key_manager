@@ -1,11 +1,20 @@
 import tkinter as tk
-import re
+import re, os, json
+from datetime import datetime
 from tkinter import ttk, messagebox, simpledialog
 from ssh_key_manager.core import key_manager, ssh_config
 from ssh_key_manager.utils import validators
 from ssh_key_manager.gui.dialogs import GenerateKeyDialog
 from pathlib import Path
 from PIL import Image, ImageTk
+
+SETTINGS_PATH = os.path.expanduser("~/.ssh/ssh-gui-settings.json")
+
+def log_to_file(msg: str):
+    log_path = os.path.expanduser("~/.ssh/ssh-gui.log")
+    with open(log_path, "a", encoding="utf-8") as f:
+        f.write(f"{datetime.now().isoformat()} — {msg}\n")
+
 
 class MainWindow(tk.Tk):
     def __init__(self):
@@ -35,10 +44,34 @@ class MainWindow(tk.Tk):
         self.notebook.add(self.config_frame, text="Удаленные подключения")
         self.notebook.add(self.settings_frame, text="Настройки")
         # инициализация UI во вкладках
+        self.load_settings()
+        self.init_settings_tab()
         self.init_keys_tab()
         self.init_config_tab()
-        self.init_settings_tab()
 
+
+    def load_settings(self):
+        try:
+            with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
+                settings = json.load(f)
+        except Exception:
+            settings = {}
+
+        self.auto_copy_var = tk.BooleanVar(value=settings.get("auto_copy", True))
+        self.log_to_file_var = tk.BooleanVar(value=settings.get("log_to_file", False))
+        self.ssh_path_value = settings.get("ssh_path", "~/.ssh")
+
+    def save_settings(self):
+        settings = {
+            "auto_copy": self.auto_copy_var.get(),
+            "log_to_file": self.log_to_file_var.get(),
+            "ssh_path": self.ssh_path_entry.get().strip()
+        }
+        try:
+            with open(SETTINGS_PATH, "w", encoding="utf-8") as f:
+                json.dump(settings, f, indent=2)
+        except Exception as e:
+            print(f"[ERROR] Не удалось сохранить настройки: {e}")
 
 
     def init_keys_tab(self):
@@ -50,6 +83,8 @@ class MainWindow(tk.Tk):
         scrollbar.config(command=self.keys_listbox.yview)
         scrollbar.pack(side="left", fill="y")
         self.keys_listbox.config(yscrollcommand=scrollbar.set)
+
+        self.keys_listbox.bind("<Double-1>", lambda e: self.show_public_key())
 
         # Панель действий (кнопки справа)
         button_frame = tk.Frame(self.keys_frame)
@@ -81,6 +116,8 @@ class MainWindow(tk.Tk):
         scrollbar.pack(side="left", fill="y")
         self.config_listbox.config(yscrollcommand=scrollbar.set)
 
+        self.config_listbox.bind("<Double-1>", lambda e: self.edit_selected_host())
+
         # Панель кнопок
         button_frame = tk.Frame(self.config_frame)
         button_frame.pack(side="left", fill="both", expand=True, padx=10)
@@ -96,6 +133,12 @@ class MainWindow(tk.Tk):
         self.config_listbox.delete(0, tk.END)
         all_blocks = ssh_config.read_config()
         self._config_entries = all_blocks
+
+        if not all_blocks:
+            # Файл пустой или не существует — показываем запись-заглушку
+            self.config_listbox.insert(tk.END, "[Пустой конфиг — нажмите для редактирования]")
+            self._config_entries = [{"type": "empty"}]  # специальный маркер
+            return
 
         for i, entry in enumerate(all_blocks):
             if entry.get("type") == "host":
@@ -119,14 +162,17 @@ class MainWindow(tk.Tk):
             return
 
         if entry.get("type") != "host":
-            messagebox.showinfo("Удаление", "Нельзя удалить глобальные настройки.")
+            messagebox.showinfo("Удаление", "Нельзя удалить глобальные настройки или пустой конфиг.")
             return
 
         host_name = entry.get("host")
         confirm = messagebox.askyesno("Удаление", f"Удалить Host '{host_name}'?")
         if confirm:
             ssh_config.delete_host(host_name)
+            if self.log_to_file_var.get():
+                log_to_file(f"Удалён хост: {host_name}")
             self.refresh_config_list()
+
 
     # открытие диалога добавления хоста
     def add_host_dialog(self):
@@ -136,6 +182,13 @@ class MainWindow(tk.Tk):
     def edit_selected_host(self):
         entry = self.get_selected_host_entry()
         if not entry:
+            return
+
+        if entry.get("type") == "empty":
+            # открываем глобальный редактор (пустой)
+            empty_entry = {"type": "global", "lines": []}
+            self._config_entries = [empty_entry]
+            self._global_editor_dialog(existing=empty_entry)
             return
 
         if entry.get("type") == "host":
@@ -193,6 +246,8 @@ class MainWindow(tk.Tk):
                 if v:
                     new_entry[k] = v
             ssh_config.add_or_update_host(new_entry)
+            if self.log_to_file_var.get():
+                log_to_file(f"Сохранён/обновлён хост: {host}")
             self.refresh_config_list()
             dialog.destroy()
 
@@ -278,18 +333,21 @@ class MainWindow(tk.Tk):
         label = ttk.Label(frame, text="Настройки", font=("Helvetica", 12, "bold"))
         label.pack(pady=(20, 10))
 
-        self.auto_copy_var = tk.BooleanVar(value=True)
         ttk.Checkbutton(frame, text="Автоматически копировать публичный ключ в буфер",
-                        variable=self.auto_copy_var).pack(anchor="w", padx=20)
+                        variable=self.auto_copy_var,
+                        command=self.save_settings).pack(anchor="w", padx=20)
 
-        self.log_to_file_var = tk.BooleanVar(value=False)
         ttk.Checkbutton(frame, text="Вести лог работы в файл ~/.ssh/ssh-gui.log",
-                        variable=self.log_to_file_var).pack(anchor="w", padx=20)
+                        variable=self.log_to_file_var,
+                        command=self.save_settings).pack(anchor="w", padx=20)
 
         ttk.Label(frame, text="Путь к ssh (опционально):").pack(anchor="w", padx=20, pady=(20, 0))
         self.ssh_path_entry = ttk.Entry(frame)
-        self.ssh_path_entry.insert(0, "/usr/bin/ssh")
+        self.ssh_path_entry.insert(0, self.ssh_path_value)
         self.ssh_path_entry.pack(fill="x", padx=20)
+
+        # сохранение поле пути
+        self.ssh_path_entry.bind("<FocusOut>", lambda e: self.save_settings())
 
 
     """
@@ -318,11 +376,12 @@ class MainWindow(tk.Tk):
         if confirm:
             success = key_manager.delete_keypair(key_name)
             if success:
+                if self.log_to_file_var.get():
+                    log_to_file(f"Удалён ключ: {key_name}")
                 messagebox.showinfo("Готово", "Ключ удалён.")
                 self.refresh_keys()
             else:
                 messagebox.showerror("Ошибка", "Не удалось удалить ключ.")
-
 
 
     def show_public_key(self):
@@ -333,11 +392,15 @@ class MainWindow(tk.Tk):
 
         pubkey = key_manager.get_public_key(key_name)
         if pubkey:
-            self.clipboard_clear()
-            self.clipboard_append(pubkey)
-            messagebox.showinfo("Публичный ключ", f"Ключ скопирован в буфер обмена:\n\n{pubkey}")
-        else:
-            messagebox.showerror("Ошибка", "Файл публичного ключа не найден.")
+            if self.auto_copy_var.get():
+                self.clipboard_clear()
+                self.clipboard_append(pubkey)
+                messagebox.showinfo("Публичный ключ", f"Ключ скопирован в буфер обмена:\n\n{pubkey}")
+            else:
+                messagebox.showinfo("Публичный ключ", f"{pubkey}")
+
+            if self.log_to_file_var.get():
+                log_to_file(f"Просмотрен публичный ключ: {key_name}")
 
     # открытие диалога генерации ключа
     def generate_key_dialog(self):

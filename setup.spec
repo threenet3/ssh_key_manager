@@ -1,11 +1,11 @@
 Name:           python-ssh-key-manager
-Version:        1.0.0
+Version:        1.0.1
 Release:        1%{?dist}
 Summary:        Графическая утилита для управления SSH-ключами
 
 License:        MIT
 URL:            https://github.com/threenet3/ssh_key_manager
-Source:         ssh_key_manager-%{version}.tar.gz
+Source:         https://github.com/threenet3/ssh_key_manager/releases/tag/v%{version}.tar.gz
 
 BuildArch:      noarch
 BuildRequires:  python3-devel
@@ -47,5 +47,5 @@ Recommends:     python3dist(pillow)
 %{_bindir}/ssh-key-manager
 
 %changelog
-* Wed Jun 25 2025 Vsevolod <v.mikh3@gmail.com> - 1.0.0-1
+* Wed Jun 25 2025 Vsevolod <v.mikh3@gmail.com> - 1.0.1-1
 - Initial build
